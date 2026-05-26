@@ -1,0 +1,159 @@
+<div class="dashboard-container">
+  
+  <!-- CABECERA -->
+  <div class="dashboard-header">
+    <div>
+      <h1>Panel de Control Financiero</h1>
+      <p class="subtitle">Bienvenido Jonathan, resumen de operaciones de tu negocio.</p>
+    </div>
+    <button class="btn-primary" (click)="downloadReport()">⬇️ Descargar Reporte Z</button>
+  </div>
+
+  <!-- SECCIÓN 1: FILTROS DE TIEMPO -->
+  <div class="filters-container panel">
+    <div class="quick-filters">
+      @for (filter of quickFilters; track filter.value) {
+        <button 
+          class="btn-filter" 
+          [class.active]="activeFilter() === filter.value"
+          (click)="applyFilter(filter.value)">
+          {{ filter.label }}
+        </button>
+      }
+    </div>
+
+    <div class="filter-divider"></div>
+
+    <div class="custom-range">
+      <div class="date-input-group">
+        <label>Desde</label>
+        <input type="date" [ngModel]="startDate()" (ngModelChange)="startDate.set($event); onCustomDateChange()">
+      </div>
+      <div class="date-input-group">
+        <label>Hasta</label>
+        <input type="date" [ngModel]="endDate()" (ngModelChange)="endDate.set($event); onCustomDateChange()">
+      </div>
+    </div>
+  </div>
+
+  <!-- ESTADOS DE CARGA GENERAL -->
+  @if (isLoading()) {
+    <div class="loading-state">
+      <div class="skeleton-loader hero-loader"></div>
+      <div class="metrics-grid">
+        <div class="skeleton-loader card-loader"></div>
+        <div class="skeleton-loader card-loader"></div>
+        <div class="skeleton-loader card-loader"></div>
+      </div>
+    </div>
+  } @else if (error()) {
+    <div class="error-msg panel">{{ error() }}</div>
+  } @else {
+
+    <!-- SECCIÓN 2: TARJETA PRINCIPAL (HERO METRIC) -->
+    <div class="metrics-result">
+      <div class="metric-card main-metric">
+        <div class="metric-icon">🌽</div>
+        <div class="metric-content">
+          <h3>Ventas Totales del Periodo</h3>
+          <h2 class="amount">{{ totalSales() | currency:'MXN':'symbol-narrow':'1.2-2' }}</h2>
+          <p class="date-context">
+            Mostrando datos del <strong>{{ startDate() | date:'dd MMM yyyy' }}</strong> al <strong>{{ endDate() | date:'dd MMM yyyy' }}</strong>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECCIÓN 3: TARJETAS SECUNDARIAS (KPIs) -->
+    <div class="metrics-grid">
+      @for (metric of secondaryMetrics(); track metric.title) {
+        <div class="metric-card standard-metric panel">
+          <div class="icon-wrapper">{{ metric.icon }}</div>
+          <div class="metric-details">
+            <h3>{{ metric.title }}</h3>
+            <h2>
+              @if (metric.isCurrency) {
+                {{ metric.value | currency:'MXN':'symbol-narrow':'1.2-2' }}
+              } @else {
+                {{ metric.value | number:'1.0-0' }}
+              }
+            </h2>
+            <p class="trend" [ngClass]="metric.percentageChange >= 0 ? 'positive' : 'negative'">
+              {{ metric.percentageChange >= 0 ? '↑ +' : '↓ ' }}{{ metric.percentageChange | abs }}% vs periodo anterior
+            </p>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- SECCIÓN 4: CUERPO DEL DASHBOARD (GRÁFICAS Y TABLAS) -->
+    <div class="dashboard-body">
+      
+      <!-- DESGLOSE POR MÉTODO DE PAGO -->
+      <div class="chart-section panel">
+        <div class="panel-header-simple">
+          <h3>Ingresos por Método de Pago</h3>
+        </div>
+        
+        <div class="payment-bars">
+          @for (method of paymentMethods(); track method.name) {
+            <div class="bar-group">
+              <div class="bar-info">
+                <span>{{ method.name }}</span>
+                <strong>{{ method.amount | currency:'MXN':'symbol-narrow':'1.2-2' }}</strong>
+              </div>
+              <div class="progress-track">
+                <div class="progress-fill" 
+                     [style.width.%]="calculatePercentage(method.amount)"
+                     [style.background-color]="method.color">
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- TABLA DE TRANSACCIONES RECIENTES -->
+      <div class="table-section panel">
+        <div class="panel-header-simple with-action">
+          <h3>Últimas Transacciones</h3>
+          <a routerLink="/transactions" class="link-action">Ver todas</a>
+        </div>
+        
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Ticket</th>
+                <th>Hora</th>
+                <th>Cajero</th>
+                <th>Método</th>
+                <th class="text-right">Monto</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (tx of recentTransactions(); track tx.id) {
+                <tr [class.refunded]="tx.status === 'REEMBOLSO'">
+                  <td><strong>{{ tx.id }}</strong></td>
+                  <td>{{ tx.time }}</td>
+                  <td>{{ tx.cashier }}</td>
+                  <td>
+                    <span class="badge" [ngClass]="getMethodClass(tx.method)">
+                      {{ tx.method }}
+                    </span>
+                  </td>
+                  <td class="text-right">
+                    <span [class.text-danger]="tx.status === 'REEMBOLSO'">
+                      {{ tx.status === 'REEMBOLSO' ? '-' : '' }}{{ tx.amount | currency:'MXN':'symbol-narrow':'1.2-2' }}
+                    </span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  }
+</div>

@@ -1,0 +1,60 @@
+<div class="p-6 bg-white rounded shadow max-w-4xl mx-auto mt-8">
+  
+  <div class="flex justify-between items-center mb-4">
+    <input type="file" accept=".pdf" (change)="onFileSelected($event)" class="text-sm">
+    
+    <div class="flex gap-2">
+      <button (click)="toggleEditMode()" 
+              class="px-4 py-2 border rounded"
+              [class.bg-blue-100]="isEditMode()">
+        {{ isEditMode() ? 'Terminar Edición' : 'Activar Edición Manual' }}
+      </button>
+      <button (click)="savePdfChanges()" 
+              class="px-4 py-2 bg-green-600 text-white rounded">
+        Quemar Cambios y Guardar
+      </button>
+    </div>
+  </div>
+
+  @if (isEditMode()) {
+    <div class="bg-blue-50 text-blue-800 p-2 mb-4 text-sm rounded text-center animate-pulse">
+      Haz clic en cualquier parte del documento para agregar texto
+    </div>
+  }
+
+  <!-- Contenedor Relativo Principal -->
+  @if (pdfBytes()) {
+    <div class="relative border border-gray-300 inline-block" #pdfWrapper>
+      
+      <!-- Visor de PDF (Capa Inferior) -->
+      <pdf-viewer [src]="pdfBytes()!"
+                  [render-text]="false"
+                  [original-size]="false"
+                  [fit-to-page]="true"
+                  (page-rendered)="onPageRendered($event)"
+                  style="width: 800px; height: 1000px; display: block;">
+      </pdf-viewer>
+
+      <!-- Capa de Interacción Transparente (Capa Superior) -->
+      @if (isEditMode()) {
+        <div class="absolute inset-0 cursor-crosshair z-10" 
+             (click)="addTextOnCanvas($event)">
+             
+          <!-- Elementos dinámicos colocados por el usuario -->
+          @for (el of elements(); track el.id) {
+            <div class="absolute z-20"
+                 [style.left.px]="el.x" 
+                 [style.top.px]="el.y"
+                 (click)="$event.stopPropagation()"> <!-- Evitar crear otro texto al hacer clic en este -->
+              <input type="text" 
+                     [(ngModel)]="el.text" 
+                     class="border border-blue-500 bg-yellow-100/80 px-1 text-sm outline-none shadow-sm"
+                     autofocus>
+            </div>
+          }
+        </div>
+      }
+
+    </div>
+  }
+</div>

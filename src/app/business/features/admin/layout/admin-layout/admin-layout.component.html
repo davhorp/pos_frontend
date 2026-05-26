@@ -1,0 +1,40 @@
+<div class="admin-layout">
+  
+  <!-- BARRA LATERAL -->
+  <aside class="sidebar">
+    <div class="logo-container">
+      <h2>🌽 Elotiuz POS</h2>
+      <span class="role-badge">Admin</span>
+    </div>
+
+    <nav class="menu-list">
+      @for (item of menuItems; track item.title) {
+        
+        <!-- Dibuja una línea si el item tiene divider en true -->
+        @if (item.divider) {
+          <hr class="menu-divider">
+        }
+
+        <!-- routerLinkActive pone la clase 'active' cuando estás en esa ruta -->
+        <a [routerLink]="item.route" routerLinkActive="active" class="menu-item">
+          <span class="menu-icon">{{ item.icon }}</span>
+          <span class="menu-title">{{ item.title }}</span>
+        </a>
+        
+      }
+    </nav>
+
+    <!-- Botón de Salir fijo abajo -->
+    <div class="sidebar-footer">
+      <button class="menu-item btn-logout" (click)="logout()">
+        <span class="menu-icon">🚪</span>
+        <span class="menu-title">Cerrar Sesión</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- CONTENIDO DINÁMICO (Aquí se renderiza el dashboard o productos) -->
+  <main class="main-content">
+    <router-outlet></router-outlet>
+  </main>
+</div>

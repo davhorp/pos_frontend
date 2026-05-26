@@ -1,0 +1,9 @@
+<div class="toast-card" [ngClass]="data().type" (mouseenter)="pauseTimer()" (mouseleave)="resumeTimer()">
+    <div class="toast-icon" [innerHTML]="icon()"></div>
+    <div class="toast-content">
+        <span class="toast-title">{{ data().title }}</span>
+        <p class="toast-message">{{ data().message }}</p>
+    </div>
+    <button class="close-btn" (click)="close.emit(data().id)">×</button>
+    <div class="progress-bar" [style.animationDuration.ms]="data().duration || 5000"></div>
+</div>

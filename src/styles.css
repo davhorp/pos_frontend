@@ -1,0 +1,96 @@
+/* ==========================================================================
+   VARIABLES DE TEMA (DARK MODE)
+   ========================================================================== */
+:root {
+  --sidebar-width: 280px;
+  --sidebar-width-collapsed: 88px;
+  
+  /* Paleta de Colores Dark Mode */
+  --bg-main: #0f172a;           /* Fondo oscuro principal */
+  --sidebar-bg: #1e293b;        /* Barra lateral ligeramente más clara */
+  --sidebar-border: #334155;    /* Borde sutil oscuro */
+  
+  --text-main: #f8fafc;         /* Blanco casi puro */
+  --text-muted: #94a3b8;        /* Gris claro para inactivos */
+  
+  /* Colores de marca Elotiuz (Adaptados para Dark) */
+  --elotiuz-light: rgba(245, 158, 11, 0.15); /* Fondo ámbar translúcido */
+  --elotiuz-main: #f59e0b;      /* Amarillo/Naranja vibrante */
+  --elotiuz-dark: #fbbf24;      /* Texto de contraste para el activo */
+
+  --toast-bg: #ffffff;
+  --toast-text: #334155; /* Slate 700 */
+  --toast-text-muted: #64748b; /* Slate 500 */
+  --toast-border: #e2e8f0; /* Slate 200 */
+  
+  /* Colores semánticos para el entorno escolar */
+  --toast-info: #0284c7;    /* Azul - Anuncios generales */
+  --toast-success: #16a34a; /* Verde - Calificaciones guardadas, éxito */
+  --toast-warning: #d97706; /* Naranja - Avisos importantes */
+  --toast-error: #dc2626;   /* Rojo - Errores de sistema/validación */
+  
+  --toast-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --toast-radius: 8px;
+
+    /* Colores de Fondo y Superficies (Dark Theme) */
+  --bg-dashboard: #0f172a;      /* Slate 900: Fondo principal muy oscuro */
+  --surface-white: #1e293b;     /* Slate 800: Superficie de las tarjetas */
+  --surface-hover: #334155;     /* Slate 700: Hover sutil */
+  
+  /* Textos (Alto contraste para legibilidad en oscuro) */
+  --text-primary: #f8fafc;      /* Slate 50: Blanco casi puro para títulos */
+  --text-secondary: #cbd5e1;    /* Slate 300: Gris claro para texto normal */
+  
+  /* Acentos y Estados */
+  --accent-blue: #3b82f6;       /* Azul brillante para destacar en oscuro */
+  --accent-blue-hover: #60a5fa; /* Azul más claro al hacer hover */
+  
+  /* Colores semánticos adaptados para Dark Mode (colores pastel/neón) */
+  --success-green: #34d399;     /* Verde esmeralda claro */
+  --danger-red: #f87171;        /* Rojo rosado claro */
+  
+  /* Bordes y Sombras */
+  --border-light: #334155;      /* Slate 700: Bordes muy sutiles */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+  
+  /* Radios */
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --branding-color: #2563eb; /* Azul corporativo */
+
+  /* Colores de marca y acentos */
+  --primary-color: #f59e0b;     /* Ámbar/Naranja principal */
+  --primary-hover: #d97706;     /* Hover más intenso */
+  
+  /* Superficies y Fondos */
+  --bg-color: #0f172a;          /* Slate 900: Fondo general ultra oscuro */
+  --surface-color: #1e293b;     /* Slate 800: Blanco de las tarjetas en oscuro */
+  --input-bg: #0f172a;          /* Fondo de las cajas de texto */
+
+  --border-color: #334155;      /* Slate 700: Bordes sutiles */
+  
+  /* Estados (Errores adaptados para no lastimar la vista) */
+  --error-color: #f87171;       /* Rojo claro/pastel */
+  --error-bg: rgba(239, 68, 68, 0.1); /* Fondo rojo translúcido */
+  
+  --brand-main: #f59e0b;        /* Ámbar/Naranja Elotiuz */
+  --brand-dark: #d97706;
+  --brand-light: rgba(245, 158, 11, 0.15);
+  
+  --success: #10b981;
+  --danger: #ef4444;
+  --danger-bg: rgba(239, 68, 68, 0.1);
+  --info: #3b82f6;
+  --purple: #8b5cf6;
+}
+
+
+
+/* You can add global styles to this file, and also import other style files */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body { height: 100%; }
+body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }

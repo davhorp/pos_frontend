@@ -1,0 +1,35 @@
+<div class="upload-container">
+  <h3>Foto de Perfil del Usuario</h3>
+
+  <div class="preview-box">
+    @if (previewUrl()) {
+      <img [src]="previewUrl()" class="avatar-img">
+    } @else {
+      <div class="placeholder">Sin Foto</div>
+    }
+  </div>
+
+  <div class="controls">
+    <label class="btn-action">
+      📁 Galería
+      <input type="file" (change)="onFileSelected($event)" hidden accept="image/*">
+    </label>
+
+    <button class="btn-action" (click)="startCamera()">📸 Cámara</button>
+  </div>
+
+  @if (isCameraOpen()) {
+    <div class="camera-modal">
+      <video #video autoplay class="video-feed"></video>
+      <canvas #canvas hidden></canvas>
+      <div class="modal-buttons">
+        <button (click)="takeSelfie()" class="btn-capture">Capturar Ahora</button>
+        <button (click)="stopCamera()" class="btn-cancel">Cerrar</button>
+      </div>
+    </div>
+  }
+
+  @if (previewUrl()) {
+    <button class="btn-upload" (click)="upload()">Confirmar y Guardar</button>
+  }
+</div>

@@ -1,0 +1,164 @@
+<div class="terminal-container">
+  
+  <!-- ========================================== -->
+  <!-- ÁREA IZQUIERDA: ESCÁNER Y CATÁLOGO TÁCTIL  -->
+  <!-- ========================================== -->
+  <div class="products-area">
+    
+    <!-- Barra Superior: Solo el Buscador -->
+    @if (shiftService.hasActiveShift()) {
+      <div class="terminal-header panel">
+        <div class="search-box w-100">
+          <input 
+            type="text" 
+            [(ngModel)]="manualBarcode" 
+            (keyup.enter)="searchManualBarcode()"
+            placeholder="🔍 Escanea código de barras o ingresa SKU..." 
+            class="premium-input w-100 scan-input">
+          <button class="btn-search" (click)="searchManualBarcode()">Buscar</button>
+        </div>
+      </div>
+    }
+
+    <!-- Pestañas de Categorías y Grid -->
+    @if (shiftService.hasActiveShift()) {
+      <div class="catalog-section">
+        <div class="category-ribbon panel">
+          @for (cat of categories; track cat) {
+            <button class="cat-tab" [class.active]="activeCategory() === cat" (click)="setCategory(cat)">
+              {{ cat }}
+            </button>
+          }
+        </div>
+
+        <div class="products-layout scrollable">
+          <div class="visual-products-grid">
+            @if (filteredProducts().length === 0) {
+              <div class="empty-state">
+                <span>📦</span>
+                <p>No hay productos rápidos configurados en esta categoría.<br>Utiliza la pistola láser.</p>
+              </div>
+            }
+            @for (prod of filteredProducts(); track prod.id) {
+              <div class="product-card" (click)="addProductToCart(prod)">
+                <div class="product-details">
+                  <span class="prod-name">{{ prod.name | uppercase | slice:0:30 }}</span>
+                  <div class="prod-meta">
+                    <span class="prod-sku">SKU: {{ prod.id | slice:0:6 }}</span>
+                    <span class="prod-price">{{ prod.price | currency:'MXN' }}</span>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    } @else {
+      <!-- Pantalla de Bloqueo (Fondo Inicial) -->
+      <div class="lock-screen panel">
+        <div class="lock-box animate-fade-in">
+          <h2>🛒 Abarrotes Davho's</h2>
+          <p>Para iniciar la operación de ventas, necesitas abrir el turno de caja.</p>
+          
+          <div class="form-group mt-4">
+            <label>Efectivo en Caja (Fondo Inicial)</label>
+            <input 
+              type="number" 
+              [(ngModel)]="fondoInicial" 
+              class="premium-input text-center font-lg w-100" 
+              placeholder="$0.00">
+          </div>
+
+          <button 
+            class="btn-primary w-100 btn-massive mt-4" 
+            [disabled]="shiftService.isCheckingStatus()"
+            (click)="abrirCaja()">
+            @if (shiftService.isCheckingStatus()) { ⏳ Abriendo Caja... } @else { 🔑 Iniciar Turno }
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- ========================================== -->
+  <!-- ÁREA DERECHA: TICKET DE VENTA              -->
+  <!-- ========================================== -->
+  <div class="cart-sidebar panel">
+    <div class="cart-header">
+      <h2>Ticket Actual</h2>
+      <span class="items-count">{{ cartService.cart().length }} arts.</span>
+    </div>
+    
+    <div class="cart-items-container">
+      @if (cartService.cart().length === 0) {
+        <div class="empty-cart animate-fade-in">
+          🧾
+          <p>Esperando artículos...</p>
+        </div>
+      } @else {
+        @for (item of cartService.cart(); track item.product.id) {
+          <div class="cart-item animate-fade-in">
+            <div class="item-info">
+              <span class="item-qty">{{ item.quantity }}x</span>
+              <div class="item-texts">
+                <span class="item-name">{{ item.product.name | uppercase }}</span>
+                <span class="item-barcode">{{ item.product.id }}</span>
+              </div>
+            </div>
+            <div class="item-actions">
+              <span class="item-price">{{ item.product.price * item.quantity | currency:'MXN' }}</span>
+              <button class="btn-remove" (click)="cartService.removeItem(item.product.id)">✖</button>
+            </div>
+          </div>
+        }
+      }
+    </div>
+
+    <div class="cart-footer">
+      <div class="cart-total-box">
+        <span class="total-label">Subtotal</span>
+        <h1 class="total-amount">{{ cartService.total() | currency:'MXN' }}</h1>
+      </div>
+
+      <button 
+        class="btn-primary w-100 btn-massive" 
+        [disabled]="cartService.cart().length === 0 || !shiftService.hasActiveShift()"
+        (click)="openCheckoutModal()">
+        💳 COBRAR TICKET
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================== -->
+<!-- MODALES (Solo conservamos Cobro y Preview del ticket) -->
+<!-- ========================================== -->
+@if (isCheckoutModalOpen()) {
+  <div class="modal-overlay" (click)="closeCheckoutModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <app-pos-checkout 
+        [amountToCharge]="cartService.total()" 
+        (paymentCompleted)="handlePaymentSuccess($event)"
+        (cancelCheckout)="closeCheckoutModal()">
+      </app-pos-checkout>
+    </div>
+  </div>
+}
+
+@if (showPreviewModal) {
+  <div class="modal-overlay" (click)="closeModal()">
+    <div class="modal-content ticket-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Venta Procesada</h3>
+        <button class="btn-close" (click)="closeModal()">✖</button>
+      </div>
+      <div class="modal-body ticket-preview">
+        <div [innerHTML]="safeTicketHtml"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeModal()">Continuar</button>
+        <button class="btn-primary" (click)="confirmPrint()">🖨️ Imprimir</button>
+      </div>
+    </div>
+  </div>
+}

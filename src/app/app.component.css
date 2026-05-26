@@ -1,0 +1,17 @@
+/* Utilidades Responsivas Universales */
+@media (max-width: 768px) {
+  .desktop-only { display: none !important; }
+  .mobile-only { display: flex !important; }
+}
+
+@media (min-width: 769px) {
+  .mobile-only { display: none !important; }
+  
+  /* Ajuste para que el interruptor del horario en PC se alinee a la derecha */
+  .portal-header {
+    justify-content: flex-end !important;
+    background: transparent !important;
+    border-bottom: none !important;
+    padding: 0 0 1.5rem 0 !important;
+  }
+}

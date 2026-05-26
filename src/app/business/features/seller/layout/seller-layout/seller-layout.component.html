@@ -1,0 +1,57 @@
+<div class="pos-layout">
+  
+  <!-- BARRA LATERAL (MENÚ) -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h2>Abarrotes Davho´s</h2>
+      <div class="user-info">
+        <span class="icon">👤</span>
+        <span class="name">{{ username() }}</span>
+      </div>
+      
+      <!-- Indicador visual reactivo -->
+      @if (shiftService.hasActiveShift()) {
+        <div class="status-badge open">🟢 Caja Abierta</div>
+      } @else {
+        <div class="status-badge closed">🔴 Caja Cerrada</div>
+      }
+    </div>
+
+    <nav class="sidebar-nav">
+      <p class="nav-section">🛒 OPERACIÓN</p>
+      <a routerLink="/seller/terminal" routerLinkActive="active-link" class="nav-item">
+        🖥️ Punto de Venta
+      </a>
+
+      <!-- Opciones bloqueadas reactivamente -->
+      <p class="nav-section">💵 CAJA Y DINERO</p>
+      <a routerLink="/seller/cash-movements" routerLinkActive="active-link" 
+         class="nav-item" [class.disabled]="!shiftService.hasActiveShift()">
+        💸 Movimientos Extra
+      </a>
+      <a routerLink="/seller/shift-close" routerLinkActive="active-link" 
+         class="nav-item" [class.disabled]="!shiftService.hasActiveShift()">
+        📉 Corte de Caja
+      </a>
+
+      <p class="nav-section">🧾 CONSULTAS</p>
+      <a routerLink="/seller/tickets" routerLinkActive="active-link" 
+         class="nav-item" [class.disabled]="!shiftService.hasActiveShift()">
+        📄 Mis Ventas del Día
+      </a>
+      <a routerLink="/seller/price-checker" routerLinkActive="active-link" class="nav-item">
+        🔍 Checador Precios
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button class="btn-lock">🔒 Bloquear</button>
+      <button class="btn-logout" (click)="logout()">🚪 Salir</button>
+    </div>
+  </aside>
+
+  <!-- ÁREA DE CONTENIDO PRINCIPAL -->
+  <main class="main-content">
+    <router-outlet></router-outlet>
+  </main>
+</div>

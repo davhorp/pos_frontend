@@ -1,0 +1,7 @@
+<div class="qr-box">
+    @if (qrUrl()) {
+        <img [src]="qrUrl()" alt="Código QR de acceso" class="qr-img">
+    } @else {
+        <div class="qr-loader">Generando...</div>
+    }
+</div>
