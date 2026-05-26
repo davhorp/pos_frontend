@@ -99,12 +99,32 @@
         @for (item of cartService.cart(); track item.product.id) {
           <div class="cart-item animate-fade-in">
             <div class="item-info">
-              <span class="item-qty">{{ item.quantity }}x</span>
+              
+              <div class="qty-controls">
+                @if (item.product.category === 'GRANEL') {
+                  <input 
+                    type="number" 
+                    [ngModel]="item.quantity" 
+                    (ngModelChange)="onGranelQuantityChange(item.product.id, $event)"
+                    class="premium-input text-center granel-input" 
+                    step="0.050" 
+                    min="0.010"
+                    placeholder="0.000">
+                  <span class="granel-unit">Kg</span>
+                } 
+                @else {
+                  <button class="btn-qty" (click)="cartService.updateQuantity(item.product.id, item.quantity - 1)">-</button>
+                  <span class="item-qty">{{ item.quantity }}</span>
+                  <button class="btn-qty" (click)="cartService.updateQuantity(item.product.id, item.quantity + 1)">+</button>
+                }
+              </div>
+              
               <div class="item-texts">
                 <span class="item-name">{{ item.product.name | uppercase }}</span>
                 <span class="item-barcode">{{ item.product.id }}</span>
               </div>
             </div>
+
             <div class="item-actions">
               <span class="item-price">{{ item.product.price * item.quantity | currency:'MXN' }}</span>
               <button class="btn-remove" (click)="cartService.removeItem(item.product.id)">✖</button>

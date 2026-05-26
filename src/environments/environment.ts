@@ -15,7 +15,8 @@ export const environment = {
   checkout : '/api/pos/sales/checkout',
   ticket: '/api/pos/tickets',
   loadMetrics_admin: '/api/pos/dashboard/admin-stats',
-
+  check_phone_wallet: '/api/pos/wallets/check',
+  all_products_active: '/api/pos/products',
 
   urlServiceResetPassword: '/auth/reset-password',
   urlServiceUploadPhoto: '/user/upload-photo-profile',

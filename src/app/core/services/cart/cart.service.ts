@@ -95,4 +95,19 @@ export class CartService {
 
     return this.http.post(`${this.apiUrl}/checkout`, saleRequest);
   }
+
+  updateQuantity(productId: string, newQuantity: number) {
+    if (newQuantity <= 0) {
+      this.removeItem(productId);
+      return;
+    }
+    
+    this.cart.update(currentItems => 
+      currentItems.map(item => 
+        item.product.id === productId 
+          ? { ...item, quantity: newQuantity } 
+          : item
+      )
+    );
+  }
 }

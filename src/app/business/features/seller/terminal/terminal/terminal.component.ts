@@ -1,5 +1,5 @@
 import { Component, HostListener, inject, OnInit, PLATFORM_ID, signal, computed } from '@angular/core';
-import { CommonModule, CurrencyPipe, DecimalPipe, SlicePipe, UpperCasePipe } from '@angular/common';
+import { CommonModule, CurrencyPipe, DecimalPipe, isPlatformBrowser, SlicePipe, UpperCasePipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
@@ -23,6 +23,8 @@ import { PosCheckoutComponent } from '../posCheckout/pos-checkout/pos-checkout.c
   styleUrls: ['./terminal.component.css']
 })
 export class TerminalComponent implements OnInit {
+
+  private platformId = inject(PLATFORM_ID);
 
   // --- Inyección de Dependencias ---
   public cartService = inject(CartService);
@@ -77,12 +79,13 @@ export class TerminalComponent implements OnInit {
   isCheckoutModalOpen = signal<boolean>(false);
 
   ngOnInit() {
-    // Simulamos la carga de productos rápidos (los que no tienen código de barras)
-    this.loadQuickAccessProducts();
+    if (isPlatformBrowser(this.platformId)) {
+      this.loadQuickAccessProducts();
+    }
   }
 
   loadQuickAccessProducts() {
-    this.http.get<Product[]>(`${environment.urlPOSSystem}/api/v1/products`)
+    this.http.get<Product[]>(`${environment.urlPOSSystem}${environment.all_products_active}`)
       .subscribe({
         next: (products) => this.productsList.set(products),
         error: (err) => console.error('Error cargando catálogo rápido', err)
@@ -225,6 +228,21 @@ export class TerminalComponent implements OnInit {
         this.showPreviewModal = true;
       }
     });
+  }
+
+  /**
+   * Maneja el cambio de cantidad manual para productos a granel (decimales).
+   */
+  onGranelQuantityChange(productId: string, value: any) {
+    const numericValue = parseFloat(value);
+    
+    // Solo actualiza si es un número válido y mayor a cero
+    if (!isNaN(numericValue) && numericValue > 0) {
+      this.cartService.updateQuantity(productId, numericValue);
+    } else if (value === '' || numericValue === 0) {
+      // Opcional: Si borra todo, puedes decidir si eliminar el producto o dejarlo en 0 temporalmente
+      // this.cartService.removeItem(productId);
+    }
   }
 
   confirmPrint() {

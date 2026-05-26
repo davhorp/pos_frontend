@@ -1,5 +1,5 @@
-import { Component, signal, computed, inject, Input, Output, EventEmitter, effect } from '@angular/core';
-import { CommonModule, CurrencyPipe } from '@angular/common';
+import { Component, signal, computed, inject, Input, Output, EventEmitter, effect, PLATFORM_ID, OnInit } from '@angular/core';
+import { CommonModule, CurrencyPipe, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../../../../../../environments/environment';
@@ -15,7 +15,9 @@ import { QRCodeModule } from 'angularx-qrcode';
   templateUrl: './pos-checkout.component.html',
   styleUrl: './pos-checkout.component.css'
 })
-export class PosCheckoutComponent {
+export class PosCheckoutComponent implements OnInit {
+
+  private platformId = inject(PLATFORM_ID);
 
   private http = inject(HttpClient);
   private saleService = inject(SaleService);
@@ -32,7 +34,8 @@ export class PosCheckoutComponent {
   // ESTADOS DEL COMPONENTE
   // ==========================================
   totalSale = signal<number>(0); 
-  paymentMethod = signal<'EFECTIVO' | 'TARJETA' | 'SPEI' | 'QR' | 'MONEDERO'>('EFECTIVO');
+  paymentMethod = signal<'EFECTIVO' | 'TARJETA' | 'SPEI' | 'QR' >('EFECTIVO');
+  useWalletBalance = signal<boolean>(false);
   transactionNumber = signal<string>(''); 
   isProcessingPayment = signal<boolean>(false);
 
@@ -59,6 +62,15 @@ export class PosCheckoutComponent {
 
   private readonly ACCUMULATION_RATE = 0.02;
 
+  // ==========================================
+    // CICLO DE VIDA
+    // ==========================================
+    ngOnInit(): void {
+      if (isPlatformBrowser(this.platformId)) {
+       
+      }
+    }
+
   constructor() {
   // 🔥 Este effect vigila los cambios en el monto y el banco
   effect(() => {
@@ -78,16 +90,14 @@ export class PosCheckoutComponent {
   estimatedEarnings = computed(() => this.totalSale() * this.ACCUMULATION_RATE);
 
   walletDiscount = computed(() => {
-    if (this.paymentMethod() === 'MONEDERO') return Math.min(this.totalSale(), this.walletBalance());
+    if (this.useWalletBalance() && this.walletChecked()) {
+      return Math.min(this.totalSale(), this.walletBalance());
+    }
     return 0;
   });
 
   finalAmountToPay = computed(() => {
-    if (this.paymentMethod() === 'MONEDERO') {
-      const remainder = this.totalSale() - this.walletBalance();
-      return remainder > 0 ? remainder : 0;
-    }
-    return this.totalSale();
+    return this.totalSale() - this.walletDiscount();
   });
 
   // OPCIONAL: Si permites que el cajero cambie de banco en el modal,
@@ -130,35 +140,44 @@ export class PosCheckoutComponent {
     return true; 
   });
 
+  /**
+ * Activa o desactiva el uso del saldo del monedero electrónico.
+ * Actúa de forma paralela al método de pago principal.
+ */
+toggleWalletUsage() {
+  // Si el cliente tiene saldo, alternamos el switch (true/false)
+  if (this.walletChecked() && this.walletBalance() > 0) {
+    this.useWalletBalance.set(!this.useWalletBalance());
+  }
+}
+
   // ==========================================
   // LÓGICA DE NEGOCIO
   // ==========================================
-  setPaymentMethod(method: 'EFECTIVO' | 'TARJETA' | 'SPEI' | 'QR' | 'MONEDERO') {
+  setPaymentMethod(method: 'EFECTIVO' | 'TARJETA' | 'SPEI' | 'QR') {
   this.paymentMethod.set(method);
   
-  // Si no es efectivo ni monedero, limpiamos campos de efectivo
-  if (method !== 'EFECTIVO' && method !== 'MONEDERO') {
+  // 1. Limpieza de Efectivo
+  if (method !== 'EFECTIVO') {
     this.amountTendered.set(null); 
   }
-  
-  // Si no es tarjeta/spei/qr, limpiamos el folio
-  if (method === 'EFECTIVO' || method === 'MONEDERO') {
-    this.transactionNumber.set(''); 
-  }
 
+  // 2. Limpieza de Tarjeta
   if (method !== 'TARJETA') {
      this.lastFourDigits.set('');
      this.authCode.set('');
   }
 
+  // 3. Limpieza de SPEI
   if (method !== 'SPEI') {
      this.transferBank.set('BBVA');
      this.trackingKey.set('');
   }
 
-  if (method === 'QR') {
-    this.transactionNumber.set(''); // Usaremos transactionNumber para el rastreo del QR
-  }
+  // 4. Limpieza del Folio General (Seguridad)
+  // Al cambiar a cualquier método, borramos el folio previo para evitar 
+  // que un número de autorización de tarjeta se envíe por error en un cobro QR.
+  this.transactionNumber.set(''); 
 }
 
   // Funciones rápidas para efectivo
@@ -171,7 +190,7 @@ export class PosCheckoutComponent {
     this.isSearchingWallet.set(true);
     this.walletChecked.set(false);
 
-    const url = `${environment.urlPOSSystem}/api/v1/wallets/check`;
+    const url = `${environment.urlPOSSystem}${environment.check_phone_wallet}`;
     const params = new HttpParams().set('phoneNumber', phone);
 
     this.http.get<{ balance: number }>(url, { params }).subscribe({
@@ -197,12 +216,25 @@ export class PosCheckoutComponent {
 
     const itemsPayload = this.cartService.cart().map(item => ({
       productId: item.product.id,
-      quantity: item.quantity,
+      // Aseguramos que se envíe como un número de máximo 3 decimales (ej. 0.536)
+      quantity: Number(item.quantity.toFixed(3)), 
       unitPrice: item.product.price 
     }));
 
+    const mapPaymentMethod = () => {
+      // Si el monedero cubre el 100% de la compra, mandamos ELECTRONIC_WALLET
+      if (this.finalAmountToPay() === 0) return 'ELECTRONIC_WALLET';
+      
+      const method = this.paymentMethod();
+      if (method === 'EFECTIVO') return 'CASH';
+      if (method === 'SPEI') return 'TRANSFER';
+      if (method === 'QR') return 'QR_CODE';
+      if (method === 'TARJETA') return this.cardBrand() === 'AMEX' ? 'CREDIT_CARD' : 'DEBIT_CARD';
+      return 'CASH';
+    };
+
     const saleRequest: SaleRequest = {
-      paymentMethod: this.paymentMethod(),
+      paymentMethod: mapPaymentMethod(),
       totalAmount: this.totalSale(),
       amountTendered: this.paymentMethod() === 'EFECTIVO' ? (this.amountTendered() || this.totalSale()) : this.totalSale(),
       items: itemsPayload,
@@ -210,8 +242,8 @@ export class PosCheckoutComponent {
       cardBrand: this.paymentMethod() === 'TARJETA' ? this.cardBrand() : undefined,
       lastFourDigits: this.paymentMethod() === 'TARJETA' ? this.lastFourDigits() : undefined,
       authCode: this.paymentMethod() === 'TARJETA' ? this.authCode() : undefined,
+      walletRedeemedAmount: this.walletDiscount(), 
       customerPhone: this.customerPhone().trim() || undefined,
-      walletRedeemedAmount: this.paymentMethod() === 'MONEDERO' ? this.walletDiscount() : 0,
 
       bankName: this.paymentMethod() === 'SPEI' ? this.transferBank() : undefined,
       trackingKey: this.paymentMethod() === 'SPEI' ? this.trackingKey() : undefined,

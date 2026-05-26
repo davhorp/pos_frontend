@@ -44,7 +44,7 @@ type FilterType = 'TODAY' | 'WEEK' | 'MONTH' | 'QUARTER' | 'YEAR' | 'CUSTOM';
   styleUrl: './dashboard.component.css'
 })
 
-export class DashboardComponent  implements OnInit {
+export class DashboardComponent implements OnInit {
 
   private platformId = inject(PLATFORM_ID);
   private http = inject(HttpClient);

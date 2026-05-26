@@ -4,7 +4,6 @@
     <button class="btn-close" (click)="cancelar()" [disabled]="isProcessingPayment()">✖</button>
   </div>
 
-  <!-- SECCIÓN 1: MÉTODOS DE PAGO -->
   <div class="payment-methods-section">
     <label class="section-label">Selecciona Método de Pago</label>
     <div class="payment-grid">
@@ -13,20 +12,21 @@
       <button (click)="setPaymentMethod('SPEI')" [class.active]="paymentMethod() === 'SPEI'" [disabled]="isProcessingPayment()">🏦 SPEI</button>
       <button (click)="setPaymentMethod('QR')" [class.active]="paymentMethod() === 'QR'" [disabled]="isProcessingPayment()">📱 QR</button>
       
-      <!-- 🔥 Aparece SOLO si ya buscamos el celular y el cliente tiene saldo -->
       @if (walletChecked() && walletBalance() > 0) {
-        <button (click)="setPaymentMethod('MONEDERO')" [class.active]="paymentMethod() === 'MONEDERO'" [disabled]="isProcessingPayment()" class="wallet-btn">
-          💎 Monedero
+        <button 
+          (click)="toggleWalletUsage()" 
+          [class.active]="useWalletBalance()" 
+          [disabled]="isProcessingPayment()" 
+          class="wallet-btn">
+          💎 {{ useWalletBalance() ? 'Quitar Saldo' : 'Usar Monedero' }}
         </button>
       }
     </div>
 
-    <!-- 🔥 NUEVO: SECCIÓN DE EFECTIVO (Billetes y Cambio) -->
     @if (paymentMethod() === 'EFECTIVO') {
       <div class="cash-section slide-down-animation">
         <label class="section-label mt-2">¿Con cuánto te paga?</label>
         
-        <!-- Botones de Acceso Rápido -->
         <div class="quick-cash-grid">
           <button class="btn-quick-cash exact" (click)="setExactAmount()">Exacto</button>
           <button class="btn-quick-cash" (click)="setQuickAmount(50)">$50</button>
@@ -44,7 +44,6 @@
             [disabled]="isProcessingPayment()">
         </div>
 
-        <!-- Alerta interactiva de Cambio o Faltante -->
         @if (amountTendered() !== null) {
           @if ((amountTendered() || 0) < finalAmountToPay()) {
             <div class="error-alert mt-3 animate-fade-in">
@@ -90,94 +89,87 @@
       </div>
     }
 
-    @if (['TARJETA'].includes(paymentMethod())) {
-      <div class="digital-section slide-down-animation">
-        
-        @if (paymentMethod() === 'TARJETA') {
-          <div class="card-details mt-3">
-            <div class="form-group">
-              <label>Marca de la Tarjeta</label>
-              <select [(ngModel)]="cardBrand" class="premium-input w-100">
-                <option value="VISA">VISA</option>
-                <option value="MASTERCARD">MASTERCARD</option>
-                <option value="AMEX">AMERICAN EXPRESS</option>
-                <option value="OTRA">OTRA</option>
-              </select>
-            </div>
-            <div class="row-inputs" style="display: flex; gap: 10px; margin-top: 10px;">
-              <div class="form-group w-50">
-                <label>Últimos 4 Dígitos</label>
-                <input type="text" [(ngModel)]="lastFourDigits" class="premium-input w-100" maxlength="4" placeholder="4567">
-              </div>
-              <div class="form-group w-50">
-                <label>Núm. Autorización</label>
-                <input type="text" [(ngModel)]="authCode" class="premium-input w-100" placeholder="Ej. 098234">
-              </div>
-            </div>
+    @if (paymentMethod() === 'TARJETA') {
+      <div class="digital-section slide-down-animation mt-3">
+        <div class="form-group">
+          <label>Marca de la Tarjeta</label>
+          <select [(ngModel)]="cardBrand" class="premium-input w-100">
+            <option value="VISA">VISA</option>
+            <option value="MASTERCARD">MASTERCARD</option>
+            <option value="AMEX">AMERICAN EXPRESS</option>
+            <option value="OTRA">OTRA</option>
+          </select>
+        </div>
+        <div class="row-inputs" style="display: flex; gap: 10px; margin-top: 10px;">
+          <div class="form-group w-50">
+            <label>Últimos 4 Dígitos</label>
+            <input type="text" [(ngModel)]="lastFourDigits" class="premium-input w-100" maxlength="4" placeholder="4567">
           </div>
-        }
-
+          <div class="form-group w-50">
+            <label>Núm. Autorización</label>
+            <input type="text" [(ngModel)]="authCode" class="premium-input w-100" placeholder="Ej. 098234">
+          </div>
+        </div>
+        
         <div class="form-group mt-3">
           <label>Folio de Operación / Referencia</label>
           <input 
             type="text" 
             [(ngModel)]="transactionNumber" 
             class="premium-input w-100" 
-            placeholder="Ingrese el folio del voucher o app..." 
+            placeholder="Ingrese el folio del voucher..." 
             [disabled]="isProcessingPayment()">
         </div>
       </div>
     }
 
     @if (paymentMethod() === 'QR') {
-  <div class="qr-section slide-down-animation mt-3">
-    
-    <div class="qr-type-selector">
-      <button class="btn-mode" [class.active]="qrMode() === 'DYNAMIC'" (click)="qrMode.set('DYNAMIC')">📱 Dinámico</button>
-      <button class="btn-mode" [class.active]="qrMode() === 'STATIC'" (click)="qrMode.set('STATIC')">🏪 Mostrador</button>
-    </div>
-
-    <div class="qr-display mt-3">
-      @if (qrMode() === 'DYNAMIC') {
-        <div class="qr-box animate-fade-in">
-          <div class="form-group w-100 mb-3">
-            <label>Banco para QR Dinámico</label>
-            <select [(ngModel)]="transferBank" (change)="onBankChange()" class="premium-input w-100">
-              <option value="BBVA">BBVA</option>
-              <option value="SANTANDER">Santander</option>
-              <option value="BANAMEX">Banamex</option>
-              <option value="CODI">CoDi Genérico</option>
-            </select>
-          </div>
-          
-          <div class="qr-code-wrapper">
-            <qrcode 
-              [qrdata]="qrDynamicData" 
-              [width]="180" 
-              [errorCorrectionLevel]="'M'">
-            </qrcode>
-          </div>
-          <p class="mt-2 text-muted text-sm">Escanea con la app bancaria. Monto precargado.</p>
+      <div class="qr-section slide-down-animation mt-3">
+        <div class="qr-type-selector">
+          <button class="btn-mode" [class.active]="qrMode() === 'DYNAMIC'" (click)="qrMode.set('DYNAMIC')">📱 Dinámico</button>
+          <button class="btn-mode" [class.active]="qrMode() === 'STATIC'" (click)="qrMode.set('STATIC')">🏪 Mostrador</button>
         </div>
-      } @else {
-        <div class="static-box animate-fade-in">
-          <span class="text-4xl">📲</span>
-          <p>Escanea el código del mostrador e ingresa:</p>
-          <h3 class="text-brand text-2xl mt-2">{{ finalAmountToPay() | currency:'MXN' }}</h3>
+
+        <div class="qr-display mt-3">
+          @if (qrMode() === 'DYNAMIC') {
+            <div class="qr-box animate-fade-in">
+              <div class="form-group w-100 mb-3">
+                <label>Banco para QR Dinámico</label>
+                <select [(ngModel)]="transferBank" (change)="onBankChange()" class="premium-input w-100">
+                  <option value="BBVA">BBVA</option>
+                  <option value="SANTANDER">Santander</option>
+                  <option value="BANAMEX">Banamex</option>
+                  <option value="CODI">CoDi Genérico</option>
+                </select>
+              </div>
+              
+              <div class="qr-code-wrapper">
+                <qrcode 
+                  [qrdata]="qrDynamicData" 
+                  [width]="180" 
+                  [errorCorrectionLevel]="'M'">
+                </qrcode>
+              </div>
+              <p class="mt-2 text-muted text-sm">Escanea con la app bancaria. Monto precargado.</p>
+            </div>
+          } @else {
+            <div class="static-box animate-fade-in">
+              <span class="text-4xl">📲</span>
+              <p>Escanea el código del mostrador e ingresa:</p>
+              <h3 class="text-brand text-2xl mt-2">{{ finalAmountToPay() | currency:'MXN' }}</h3>
+            </div>
+          }
         </div>
-      }
-    </div>
 
-    <div class="form-group mt-3">
-      <label>Folio de Operación / Rastreo *</label>
-      <input type="text" [(ngModel)]="transactionNumber" class="premium-input w-100" placeholder="Ej. #123456789">
-    </div>
-  </div>
-}
+        <div class="form-group mt-3">
+          <label>Folio de Operación / Rastreo *</label>
+          <input type="text" [(ngModel)]="transactionNumber" class="premium-input w-100" placeholder="Ej. #123456789">
+        </div>
+      </div>
+    }
   </div>
 
-  <!-- SECCIÓN 2: MONEDERO ELECTRÓNICO (Se mantiene igual) -->
-  <div class="wallet-section-box">
+  <div class="wallet-section-box mt-3">
     <div class="section-title"><span>📱 Monedero Davho's</span></div>
     <div class="phone-input-group">
       <input type="tel" [(ngModel)]="customerPhone" (input)="customerPhone().length === 10 ? checkWalletStatus() : null" placeholder="Número Celular (10 dígitos)" maxlength="10" class="premium-input" [disabled]="isProcessingPayment()">
@@ -192,8 +184,10 @@
           <span>Saldo Actual:</span>
           <strong class="text-success">{{ walletBalance() | currency:'MXN':'symbol-narrow':'1.2-2' }}</strong>
         </div>
-        @if (walletBalance() > 0 && paymentMethod() !== 'MONEDERO') {
-          <button class="btn-use-points" (click)="setPaymentMethod('MONEDERO')" [disabled]="isProcessingPayment()">💎 Pagar usando saldo disponible</button>
+        @if (walletBalance() > 0) {
+          <button class="btn-use-points" (click)="toggleWalletUsage()" [disabled]="isProcessingPayment()">
+            💎 {{ useWalletBalance() ? 'Cancelar uso de saldo' : 'Pagar usando saldo disponible' }}
+          </button>
         }
       </div>
     }
@@ -205,18 +199,18 @@
     }
   </div>
 
-  <!-- SECCIÓN 3: RESUMEN DE PAGOS -->
   <div class="payment-summary mt-4">
     <div class="summary-row"><span>Subtotal:</span><span>{{ totalSale() | currency:'MXN':'symbol-narrow':'1.2-2' }}</span></div>
     
-    @if (paymentMethod() === 'MONEDERO') {
-      <div class="summary-row text-danger animate-fade-in"><span>Descuento Monedero:</span><span>-{{ walletDiscount() | currency:'MXN':'symbol-narrow':'1.2-2' }}</span></div>
+    @if (useWalletBalance() && walletDiscount() > 0) {
+      <div class="summary-row text-danger animate-fade-in">
+        <span>Descuento Monedero:</span><span>-{{ walletDiscount() | currency:'MXN':'symbol-narrow':'1.2-2' }}</span>
+      </div>
     }
 
     <div class="summary-row total-row"><span>Total a Cobrar:</span><span class="text-brand">{{ finalAmountToPay() | currency:'MXN':'symbol-narrow':'1.2-2' }}</span></div>
   </div>
 
-  <!-- BOTÓN FINAL -->
   <button class="btn-confirm-checkout" (click)="confirmarPago()" [disabled]="isProcessingPayment() || !isPaymentValid()">
     @if (isProcessingPayment()) { ⏳ Procesando... } 
     @else if (!isPaymentValid()) { 🔒 Ingrese los datos de cobro }
