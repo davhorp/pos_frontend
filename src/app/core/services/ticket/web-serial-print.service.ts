@@ -86,14 +86,42 @@ export class WebSerialPrintService {
                 text-rendering: geometricPrecision;
               }
             .ticket-text { white-space: pre-wrap; }
-            .barcode-container { text-align: center; margin-top: 10px; margin-bottom: 25px; }
-            .barcode-container svg { max-width: 90%; height: auto; }
           </style>
         </head>
         <body>
           <div class="ticket-text">${ticketText}</div>
           <div>
             --------------------------------------------
+            <br><br> <!-- Espacio para que el papel salga después de imprimir -->
+          </div>
+        </body>
+      </html>
+    `;
+  }
+
+  printViaIframeWallet(ticketText: string): string {
+    return `
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            @page { margin: 0; }
+            body { 
+                margin: 0; 
+                padding: 0;
+                font-family: 'Courier New', Courier, monospace; 
+                font-size: 7px; 
+                color: #000000;
+                max-height: 400px;
+                background-color: #FFFFFF;
+                text-rendering: geometricPrecision;
+              }
+            .ticket-text { white-space: pre-wrap; }
+          </style>
+        </head>
+        <body>
+          <div class="ticket-text">${ticketText}</div>
+          <div>
             <br><br> <!-- Espacio para que el papel salga después de imprimir -->
           </div>
         </body>

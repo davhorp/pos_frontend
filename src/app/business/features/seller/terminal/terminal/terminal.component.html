@@ -8,14 +8,29 @@
     <!-- Barra Superior: Solo el Buscador -->
     @if (shiftService.hasActiveShift()) {
       <div class="terminal-header panel">
-        <div class="search-box w-100">
+        <div class="search-container">
           <input 
             type="text" 
-            [(ngModel)]="manualBarcode" 
+            class="scan-input" 
+            placeholder="Escanear código o buscar por nombre..."
+            [(ngModel)]="manualBarcode"
+            (ngModelChange)="onSearchInput($event)"
             (keyup.enter)="searchManualBarcode()"
-            placeholder="🔍 Escanea código de barras o ingresa SKU..." 
-            class="premium-input w-100 scan-input">
-          <button class="btn-search" (click)="searchManualBarcode()">Buscar</button>
+            autofocus>
+        </div>
+
+        <div class="actions-group">
+          <button class="btn-wallet" (click)="openWalletSearchModal()">
+            <span class="icon">💳</span> Monedero
+          </button>
+          
+          <button class="btn-close-shift" (click)="openCloseShiftModal()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+            Cerrar Turno
+          </button>
         </div>
       </div>
     }
@@ -41,13 +56,36 @@
             }
             @for (prod of filteredProducts(); track prod.id) {
               <div class="product-card" (click)="addProductToCart(prod)">
+                <div class="product-image-container">
+                  @if (prod.imageUrl) {
+                    <img [src]="prod.imageUrl" [alt]="prod.name" class="prod-img">
+                  } @else {
+                    <div class="prod-img-placeholder">
+                      {{ prod.name.charAt(0) | uppercase }}
+                    </div>
+                  }
+                </div>
                 <div class="product-details">
-                  <span class="prod-name">{{ prod.name | uppercase | slice:0:30 }}</span>
+                  <span class="prod-name">{{ prod.name | uppercase }}</span>
                   <div class="prod-meta">
-                    <span class="prod-sku">SKU: {{ prod.id | slice:0:6 }}</span>
+                    <span class="prod-sku">SKU: {{ prod.barcode }}</span>
+                    <span class="badge badge-secondary">{{ prod.unitOfMeasure }}</span>
+                  </div>
+                  <div class="prod-footer">
                     <span class="prod-price">{{ prod.price | currency:'MXN' }}</span>
+                    <span class="prod-stock" [ngClass]="prod.stockQuantity < 5 ? 'danger' : 'success'">
+                      <small style="opacity: 0.7;">Stock:</small>{{ prod.stockQuantity }}
+                    </span>
                   </div>
                 </div>
+              </div>
+            } @empty {
+              <div class="empty-catalog text-center">
+                @if (searchTerm()) {
+                  <p>No se encontraron productos para "<strong>{{ searchTerm() }}</strong>".</p>
+                } @else {
+                  <p>No hay productos activos en el catálogo.</p>
+                }
               </div>
             }
           </div>
@@ -88,11 +126,19 @@
       <h2>Ticket Actual</h2>
       <span class="items-count">{{ cartService.cart().length }} arts.</span>
     </div>
-    
+    <!--@if (customerPhone().length === 10) {
+      <div class="wallet-summary-panel">
+        <p>Cliente: <strong>{{ customerPhone() }}</strong></p>
+        <div class="wallet-actions-row mt-2" style="display: flex; gap: 8px;">
+          <button class="btn-secondary" (click)="imprimirEstadoCuenta()">🖨️ Imprimir</button>
+          <button class="btn-secondary" (click)="abrirModalEmail()">📧 Correo</button>
+        </div>
+      </div>
+    }-->
     <div class="cart-items-container">
       @if (cartService.cart().length === 0) {
-        <div class="empty-cart animate-fade-in">
-          🧾
+        <div class="empty-cart animate-fade-in idle-animation">
+          <span class="empty-icon">🧾</span>
           <p>Esperando artículos...</p>
         </div>
       } @else {
@@ -121,7 +167,7 @@
               
               <div class="item-texts">
                 <span class="item-name">{{ item.product.name | uppercase }}</span>
-                <span class="item-barcode">{{ item.product.id }}</span>
+                <span class="item-barcode">{{ item.product.barcode }}</span>
               </div>
             </div>
 
@@ -178,6 +224,144 @@
       <div class="modal-footer">
         <button class="btn-secondary" (click)="closeModal()">Continuar</button>
         <button class="btn-primary" (click)="confirmPrint()">🖨️ Imprimir</button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (isCloseShiftModalOpen()) {
+  <div class="modal-overlay animate-fade-in" (click)="closeShiftModal()">
+    <div class="premium-modal scale-in" (click)="$event.stopPropagation()">
+      
+      <div class="modal-header border-b-danger">
+        <h3>Corte de Caja (Corte Z)</h3>
+        <button class="btn-close-icon" (click)="closeShiftModal()" [disabled]="isProcessingClose()">✖</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="security-alert danger-alert mb-3">
+          <span class="alert-icon">⚠️</span>
+          <div class="alert-text">
+            <strong>Atención:</strong> Esta acción cerrará el turno actual y generará el ticket de Corte Z. No podrá registrar más ventas en este turno.
+          </div>
+        </div>
+
+        <p class="text-muted text-center mt-2">Ingrese el efectivo físico total contabilizado en la gaveta para calcular el sobrante o faltante.</p>
+        
+        <div class="form-group mt-3">
+          <label class="text-muted text-center w-100">Efectivo Real en Caja</label>
+          <input 
+            type="number" 
+            [(ngModel)]="actualCashInDrawer" 
+            class="premium-input text-center font-xl w-100 cash-input mt-1" 
+            placeholder="$0.00"
+            [disabled]="isProcessingClose()">
+        </div>
+      </div>
+
+      <div class="modal-footer mt-4">
+        <button class="btn-cancel" (click)="closeShiftModal()" [disabled]="isProcessingClose()">Cancelar</button>
+        <button class="btn-danger-action" (click)="confirmCloseShift()" [disabled]="actualCashInDrawer() === null || actualCashInDrawer()! < 0 || isProcessingClose()">
+          @if (isProcessingClose()) { 
+            ⏳ Procesando... 
+          } @else { 
+            🖨️ Cerrar e Imprimir Corte Z 
+          }
+        </button>
+      </div>
+
+    </div>
+  </div>
+}
+
+@if (showZReportModal()) {
+  <div class="modal-overlay animate-fade-in" (click)="showZReportModal.set(false)">
+    <div class="premium-modal scale-in" (click)="$event.stopPropagation()">
+      
+      <div class="modal-header border-b-brand">
+        <h3>Reporte Z Generado</h3>
+        <button class="btn-close-icon" (click)="showZReportModal.set(false)">✖</button>
+      </div>
+
+      <div class="modal-body ticket-preview">
+        <div [innerHTML]="safeZReportHtml"></div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-cancel" (click)="showZReportModal.set(false)">Cerrar</button>
+        <button class="btn-primary" (click)="printZReport()">🖨️ Imprimir Reporte</button>
+      </div>
+
+    </div>
+  </div>
+}
+
+@if (isEmailModalOpen()) {
+  <div class="modal-overlay" (click)="closeEmailModal()">
+    <div class="premium-modal scale-in" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Enviar Estado de Cuenta</h3>
+        <button class="btn-close-icon" (click)="closeEmailModal()">✖</button>
+      </div>
+      
+      <div class="modal-body">
+        <p class="text-muted">El detalle se enviará al correo electrónico del cliente.</p>
+        <input 
+          type="email" 
+          #emailInput 
+          class="premium-input w-100 mt-2" 
+          placeholder="cliente@ejemplo.com">
+      </div>
+      
+      <div class="modal-footer">
+        <button 
+          class="btn-cancel" 
+          (click)="closeEmailModal()" 
+          [disabled]="isSendingEmail()">
+          Cancelar
+        </button>
+        
+        <button 
+          class="btn-primary" 
+          (click)="confirmSendEmail(emailInput.value)" 
+          [disabled]="isSendingEmail()">
+          
+          @if (isSendingEmail()) {
+            <span class="spinner">⏳</span> Enviando...
+          } @else {
+            📧 Enviar Correo
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (isWalletSearchModalOpen()) {
+  <div class="modal-overlay" (click)="closeWalletSearchModal()">
+    <div class="premium-modal scale-in" (click)="$event.stopPropagation()">
+      <div class="modal-header border-b-brand">
+        <h3>Consulta de Monedero</h3>
+        <button class="btn-close-icon" (click)="closeWalletSearchModal()">✖</button>
+      </div>
+      
+      <div class="modal-body">
+        <p class="text-muted">Ingrese el número de teléfono del cliente para consultar su historial:</p>
+        <input 
+          type="tel" 
+          [(ngModel)]="walletPhoneInput"
+          class="premium-input w-100 mt-2 font-lg" 
+          placeholder="Ej. 5512345678"
+          maxlength="10">
+      </div>
+      
+      <div class="modal-footer" style="flex-direction: column; gap: 10px;">
+        <button class="btn-primary w-100" (click)="handleWalletAction('PRINT')">
+          🖨️ Imprimir Estado de Cuenta
+        </button>
+        <button class="btn-secondary w-100" (click)="handleWalletAction('EMAIL')">
+          📧 Enviar por Correo
+        </button>
       </div>
     </div>
   </div>

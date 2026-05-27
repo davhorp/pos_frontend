@@ -3,5 +3,8 @@ export interface Product {
   name: string;
   barcode: string;
   price: number;
+  stockQuantity: number;
+  unitOfMeasure: string;
+  imageUrl?: string;
   category: string;
 }

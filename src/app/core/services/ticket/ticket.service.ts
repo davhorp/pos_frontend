@@ -17,4 +17,13 @@ export class TicketService {
   getTicket(saleId: string): Observable<TicketResponse> {
     return this.http.get<TicketResponse>(`${environment.urlPOSSystem}${environment.ticket}/${saleId}`);
   }
+
+  /**
+   * Obtiene el ticket térmico del estado de cuenta de un cliente.
+   */
+  getWalletStatementTicket(phoneNumber: string) {
+    return this.http.get<{ ticketContent: string, uuid: string, nameTicket: string }>(
+      `${environment.urlPOSSystem}/api/pos/wallets/${phoneNumber}/statement/ticket`
+    );
+  }
 }
