@@ -356,12 +356,44 @@
       </div>
       
       <div class="modal-footer" style="flex-direction: column; gap: 10px;">
-        <button class="btn-primary w-100" (click)="handleWalletAction('PRINT')">
-          🖨️ Imprimir Estado de Cuenta
-        </button>
-        <button class="btn-secondary w-100" (click)="handleWalletAction('EMAIL')">
-          📧 Enviar por Correo
-        </button>
+        <div class="wallet-actions-container">
+  <h3 class="text-muted">Acciones de Monedero</h3>
+  
+  <div class="actions-grid">
+    <button class="action-btn" (click)="handleWalletAction('PRINT')">
+      <span class="icon">🖨️</span>
+      <span class="label">Imprimir Movimientos</span>
+    </button>
+
+    <button class="action-btn" (click)="handleWalletAction('EMAIL')">
+      <span class="icon">📧</span>
+      <span class="label">Enviar por Correo</span>
+    </button>
+
+    <button class="action-btn" (click)="consultarSaldo()">
+      <span class="icon">💳</span>
+      <span class="label">Consultar Saldo</span>
+    </button>
+  </div>
+</div>
+      </div>
+    </div>
+  </div>
+}
+
+@if (showPreviewModalGetBalanceWallet) {
+  <div class="modal-overlay" (click)="closeModalGetBalanceWallet()">
+    <div class="modal-content ticket-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Consulta de Saldo</h3>
+        <button class="btn-close" (click)="closeModalGetBalanceWallet()">✖</button>
+      </div>
+      <div class="modal-body ticket-preview">
+        <div [innerHTML]="safeTicketBalanceWalletHtml"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeModalGetBalanceWallet()">Continuar</button>
+        <button class="btn-primary" (click)="confirmPrintGetBalanceWallet()">🖨️ Imprimir</button>
       </div>
     </div>
   </div>

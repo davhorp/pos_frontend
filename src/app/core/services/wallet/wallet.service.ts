@@ -1,7 +1,13 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
+
+interface WalletBalanceResponse {
+  phone: string;
+  ticketBalanceHtmlContent: string;
+  balance: number;
+}
 
 @Injectable({
   providedIn: 'root'
@@ -24,4 +30,15 @@ export class WalletService {
       responseType: 'text' // El backend retorna un ResponseEntity<String>
     });
   }
+
+  /**
+   * Consulta el saldo actual del monedero.
+   * Utiliza 'map' para extraer directamente el número y facilitar el uso en el componente.
+   * * @param phone Número de teléfono del cliente a 10 dígitos
+   * @returns Un Observable que emite el saldo (number)
+   */
+  getSaldo(phone: string): Observable<WalletBalanceResponse> {
+    return this.http.get<WalletBalanceResponse>(`${this.apiUrl}/${phone}/balance`);
+  }
+  
 }

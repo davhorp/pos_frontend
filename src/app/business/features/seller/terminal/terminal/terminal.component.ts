@@ -89,6 +89,10 @@ export class TerminalComponent implements OnInit {
   safeZReportHtml: SafeHtml = '';
   rawZReportHtml = '';
 
+  showPreviewModalGetBalanceWallet = false;
+  safeTicketBalanceWalletHtml: SafeHtml = '';
+  rawTicketBalanceWalletHtml = '';
+
   showCloseShiftModal = signal<boolean>(false);
   declaredCash = signal<number>(0);
   isClosing = signal<boolean>(false);
@@ -121,7 +125,8 @@ walletPhoneInput = signal<string>('');
   }
 
   setCategory(cat: string) {
-    this.searchTerm.set(''); // Limpiamos el término de búsqueda al cambiar de categoría
+    this.searchTerm.set('');
+    this.manualBarcode = '';  // Limpiamos el término de búsqueda al cambiar de categoría
     this.activeCategory.set(cat);
   }
 
@@ -139,7 +144,7 @@ walletPhoneInput = signal<string>('');
       },
       error: (err) => {
         this.shiftService.isCheckingStatus.set(false);
-        this.toastService.show('Error', err.error?.message || 'Error de apertura', 'error', 4000);
+        this.toastService.show('Error', err.error?.message || 'Error de apertura, contactar con Soporte', 'error', 4000);
       }
     });
   }
@@ -404,6 +409,42 @@ imprimirEstadoCuentaDesdeModal(phone: string) {
     },
     error: () => this.toastService.show('Advertencia', 'No se encontró el monedero.', 'warning', 3000)
   });
+}
+
+// Método que llamas cuando obtienes la respuesta del servicio
+  openBalanceModal(phoneNumber: string) {
+    this.walletService.getSaldo(phoneNumber).subscribe({
+    next: (response) => {
+      this.rawTicketBalanceWalletHtml = this.webSerialPrintService.printViaIframeWallet(response.ticketBalanceHtmlContent);
+      this.safeTicketBalanceWalletHtml = this.sanitizer.bypassSecurityTrustHtml(this.rawTicketBalanceWalletHtml);
+      this.showPreviewModalGetBalanceWallet = true;
+      //this.isWalletSearchModalOpen.set(false);
+     //this.toastService.show('Saldo Actual', `El saldo es: $${response.balance}`, 'info', 4000);
+    },
+    error: () => {
+      this.isWalletSearchModalOpen.set(false);
+      this.toastService.show('Error', 'No se pudo consultar el saldo.', 'error', 3000);
+    }
+  });
+  }
+
+closeModalGetBalanceWallet() {
+    this.showPreviewModalGetBalanceWallet = false;
+  }
+
+  confirmPrintGetBalanceWallet() {
+    this.webSerialPrintService.printHtml(this.rawTicketBalanceWalletHtml);
+    this.showPreviewModal = false; 
+    this.closeModalGetBalanceWallet();
+  }
+
+  consultarSaldo() {
+  const phone = this.walletPhoneInput();
+  if (phone.length !== 10) {
+    this.toastService.show('Error', 'Teléfono inválido', 'error', 2000);
+    return;
+  }
+  this.openBalanceModal(phone);
 }
 
 }

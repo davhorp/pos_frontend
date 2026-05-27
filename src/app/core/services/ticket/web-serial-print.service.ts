@@ -85,11 +85,14 @@ export class WebSerialPrintService {
                 background-color: #FFFFFF;
                 text-rendering: geometricPrecision;
               }
+            .divHtml { display: flex; justify-content: center; align-items: center; }
             .ticket-text { white-space: pre-wrap; }
           </style>
         </head>
         <body>
-          <div class="ticket-text">${ticketText}</div>
+          <div class="divHtml">
+            <div >${ticketText}</div>
+          </div>
           <div>
             --------------------------------------------
             <br><br> <!-- Espacio para que el papel salga después de imprimir -->
@@ -116,11 +119,14 @@ export class WebSerialPrintService {
                 background-color: #FFFFFF;
                 text-rendering: geometricPrecision;
               }
+            .divHtml { display: flex; justify-content: center; align-items: center; }
             .ticket-text { white-space: pre-wrap; }
           </style>
         </head>
         <body>
-          <div class="ticket-text">${ticketText}</div>
+          <div >
+            <div >${ticketText}</div>
+          </div>
           <div>
             <br><br> <!-- Espacio para que el papel salga después de imprimir -->
           </div>
@@ -162,12 +168,15 @@ export class WebSerialPrintService {
                 text-rendering: geometricPrecision;
               }
             .ticket-text { white-space: pre-wrap; }
+            .divHtml { display: flex; justify-content: center; align-items: center; }
             .barcode-container { text-align: center; margin-top: 10px; margin-bottom: 25px; }
             .barcode-container svg { max-width: 90%; height: auto; }
           </style>
         </head>
         <body>
-          <div class="ticket-text">${ticketText}</div>
+          <div class="divHtml">
+            <div >${ticketText}</div>
+          </div>
           <div class="barcode-container">
             ${barcodeSvgHtml}
           </div>
